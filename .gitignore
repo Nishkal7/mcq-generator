@@ -35,6 +35,10 @@ node_modules/
 npm-debug.log
 yarn-error.log
 
+# Credentials
+.env
+.env.test
+
 # BUCK
 buck-out/
 \.buckd/

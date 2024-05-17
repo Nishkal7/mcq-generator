@@ -1,16 +1,21 @@
-const express = require('express');
+const express = require("express");
+const mcqRouter = require("./src/routes/mcqRoutes");
 
 const app = express();
 
-// app.use(function (err, req, res, next) {
-//     console.error(err.stack)
-//     res.status(500).send('Something broke!')
-// });
-  
-app.get('/', (req, res) => {
-    res.send('Welcome to my app');
-})
+const dotenv = require("dotenv");
+dotenv.config({ path: "./.env" });
 
-app.listen(3000, () => {
-    console.log('Listening on port 3000.....')
+const mongoose = require("mongoose");
+mongoose.connect(process.env.MONGO_CONNECTION_STRING);
+
+app.use(express.json());
+app.use("/mcq", mcqRouter);
+
+app.get("/", (req, res) => {
+  res.send("Welcome to my app!!");
+});
+
+app.listen(process.env.PORT, () => {
+  console.log(`Listening on port ${process.env.PORT}`);
 });
