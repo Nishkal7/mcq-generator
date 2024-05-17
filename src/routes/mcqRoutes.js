@@ -62,4 +62,49 @@ router.post("/update", async (req, res) => {
   }
 });
 
+router.post("/deleteQuestion", async (req, res) => {
+  try {
+    const title = req.body.title;
+    const question = req.body.question;
+    const record = await Mcq.exists({ title });
+    if (record) {
+      const result = await Mcq.findOne({ title });
+      const ind = result.data.findIndex(
+        (currItem) => currItem.question === question
+      );
+
+      if (ind > -1) {
+        result.data.splice(ind, 1);
+      }
+
+      await Mcq.updateOne(
+        { title },
+        {
+          data: result.data,
+        }
+      );
+      res.send("Question Deleted Sucessfully");
+    } else {
+      res.status(404).send("Record not found");
+    }
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
+router.post("/deleteTest", async (req, res) => {
+  try {
+    const title = req.body.title;
+    const record = await Mcq.exists({ title });
+    if (record) {
+      const result = await Mcq.deleteOne({ title });
+      res.send(result);
+    } else {
+      res.status(404).send("Record not found");
+    }
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
 module.exports = router;
