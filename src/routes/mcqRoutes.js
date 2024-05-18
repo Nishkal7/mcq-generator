@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const logger = require('../util/logger.js')
 const Mcq = require("../model/mcqModel");
 
 const duplicateCheck = async (req, res, next) => {
@@ -17,6 +18,7 @@ router.post("/create", duplicateCheck, async (req, res) => {
     const mcqData = req.body;
     await Mcq.validate(mcqData);
     const mcqDoc = await Mcq.create(mcqData);
+    logger.emit('logging', 'Record Succesfully Created', 'bgBlue');
     res.send(mcqDoc);
   } catch (error) {
     res.status(500).send(error);
@@ -52,7 +54,7 @@ router.post("/update", async (req, res) => {
           author: updatedAuthor,
         }
       );
-
+      logger.emit('logging', 'Record updated Sucessfully', 'bgBlue');
       res.send("Record updated Sucessfully");
     } else {
       res.status(404).send("Record not found");
@@ -83,6 +85,7 @@ router.post("/deleteQuestion", async (req, res) => {
           data: result.data,
         }
       );
+      logger.emit('logging', 'Question Deleted Sucessfully', 'bgRed');
       res.send("Question Deleted Sucessfully");
     } else {
       res.status(404).send("Record not found");
@@ -98,6 +101,7 @@ router.post("/deleteTest", async (req, res) => {
     const record = await Mcq.exists({ title });
     if (record) {
       const result = await Mcq.deleteOne({ title });
+      logger.emit('logging', 'Test Deleted Sucessfully', 'bgRed');
       res.send(result);
     } else {
       res.status(404).send("Record not found");
