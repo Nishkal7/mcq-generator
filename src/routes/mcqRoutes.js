@@ -3,6 +3,10 @@ const router = express.Router();
 const logger = require('../util/logger.js')
 const Mcq = require("../model/mcqModel");
 
+// TODO :
+// Get API to get list of all objects
+// Randomize API
+
 const duplicateCheck = async (req, res, next) => {
   const title = req.body.title;
   const record = await Mcq.exists({ title });
@@ -13,6 +17,7 @@ const duplicateCheck = async (req, res, next) => {
   }
 };
 
+// Deprecated api, will be using this flow from upload through excel api. TODO : Clean this up later.
 router.post("/create", duplicateCheck, async (req, res) => {
   try {
     const mcqData = req.body;

@@ -3,6 +3,8 @@ const mcqRouter = require("./src/routes/mcqRoutes");
 const multer = require("multer");
 const excelToJson = require("convert-excel-to-json");
 const fs = require("fs-extra");
+const logger = require("./src/util/logger");
+const Mcq = require("./src/model/mcqModel");
 
 const app = express();
 let upload = multer({ dest: "uploads/" });
@@ -20,9 +22,28 @@ app.get("/", (req, res) => {
   res.send("Welcome to my app!!");
 });
 
-app.post("/uploadFile", upload.single("file"), (req, res) => {
+const getMcqModalData = (excelData) => {
+  const transformedData = {};
+  transformedData.title = excelData.Sheet1[0]?.title;
+  transformedData.author = excelData.Sheet1[0]?.author;
+  transformedData.data = [];
+
+  excelData.Sheet1.forEach((item) => {
+    transformedData.data.push({
+      question: item.question,
+      options: item.options.split(",").map((subItem) => {
+        return subItem.trim();
+      }),
+      answers: item.answers.split(",").map((subItem) => {
+        return subItem.trim();
+      }),
+    });
+  });
+  return transformedData;
+};
+
+app.post("/uploadFile", upload.single("file"), async (req, res) => {
   try {
-    console.log('req', req.file)
     if (req.file?.filename === null || req.file?.filename === undefined) {
       res.status(400).json("No File");
     } else {
@@ -35,13 +56,30 @@ app.post("/uploadFile", upload.single("file"), (req, res) => {
         },
         columnToKey: {
           A: "id",
-          B: "Question",
-          C: "Options",
-          D: "Answers",
+          B: "question",
+          C: "options",
+          D: "answers",
+          E: "title",
+          F: "author",
         },
       });
       fs.remove(filePath);
-      res.status(200).json(excelData);
+      try {
+        const transformedExcelData = getMcqModalData(excelData);
+        const record = await Mcq.exists({ title: transformedExcelData?.title });
+        if (record) {
+          res
+            .status(409)
+            .send("Duplicate title found, please give unique name");
+        } else {
+            await Mcq.validate(transformedExcelData);
+            const mcqDoc = await Mcq.create(transformedExcelData);
+            logger.emit("logging", "Record Succesfully Created", "bgBlue");
+            res.send(mcqDoc);
+        }
+      } catch (error) {
+        res.status(500).send(error);
+      }
     }
   } catch (error) {
     res.status(500).send(error);
