@@ -1,5 +1,4 @@
  TODO :
- *Randomize API logic ( Provide Random questions and options interchanged with limit option for questions quantity )*. - IN-PROGRESS
  *Provide the Dummy plain excel sheet to the users for downloading through api with the format sample examples mentioned in the sheet*.
  -Try using Generator function for any use case (optional).
  -Implement unit testing using Mocha.js.

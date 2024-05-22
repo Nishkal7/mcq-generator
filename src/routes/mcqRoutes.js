@@ -33,9 +33,26 @@ const checkItemInArray = (currentData, newItem) => {
   return res;
 };
 
-const randomize = (data, limit) => {
-  //TODO random logics
-  return data;
+const shuffle = (dataArray) => {
+  for(let i= dataArray.length - 1; i >= 0; i--){
+    const j = Math.floor(Math.random() * (i+1));
+    [dataArray[i], dataArray[j]] = [dataArray[j], dataArray[i]]
+  }
+  return dataArray;
+}
+
+const randomize = (result, limit) => {
+  if(limit <= 0){
+    limit = 1;
+  }
+  if(limit > result.data.length){
+    limit = result.data.length
+  }
+  result?.data.forEach((item) => {
+    item.options = shuffle(item.options);
+  })
+  result.data = shuffle(result.data);
+  return result.data.slice(0, limit);
 }
 
 router.post("/update", async (req, res) => {
@@ -74,7 +91,7 @@ router.get("/randomize/:limit", async(req, res) => {
   try {
     const result = await Mcq.findOne({ title: req.query?.title });
     if(result){
-      const transformedData = randomize(result, req.params?.limit ?? result.data.length);
+      const transformedData = randomize(result, req.params?.limit);
       res.send(transformedData);
     }
     else {
