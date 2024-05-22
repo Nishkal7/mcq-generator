@@ -86,6 +86,15 @@ app.post("/uploadFile", upload.single("file"), async (req, res) => {
   }
 });
 
+app.get("/getAllDocs", async(req, res) => {
+  try {
+    const results = await Mcq.find();
+    res.send(results);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+})
+
 app.listen(process.env.PORT, () => {
   console.log(`Listening on port ${process.env.PORT}`);
 });

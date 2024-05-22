@@ -33,6 +33,11 @@ const checkItemInArray = (currentData, newItem) => {
   return res;
 };
 
+const randomize = (data, limit) => {
+  //TODO random logics
+  return data;
+}
+
 router.post("/update", async (req, res) => {
   try {
     const title = req.body.title;
@@ -64,6 +69,21 @@ router.post("/update", async (req, res) => {
     res.status(500).send(error);
   }
 });
+
+router.get("/randomize/:limit", async(req, res) => {
+  try {
+    const result = await Mcq.findOne({ title: req.query?.title });
+    if(result){
+      const transformedData = randomize(result, req.params?.limit ?? result.data.length);
+      res.send(transformedData);
+    }
+    else {
+      res.status(404).send("Record not found");
+    }
+  } catch (error) {
+    res.status(500).send(error);
+  }
+})
 
 router.post("/deleteQuestion", async (req, res) => {
   try {
