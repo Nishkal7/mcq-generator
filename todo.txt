@@ -1,4 +1,5 @@
- TODO :
- *Provide the Dummy plain excel sheet to the users for downloading through api with the format sample examples mentioned in the sheet*.
- -Try using Generator function for any use case (optional).
+ TODO v2:
+ -Update functionality through Excel ( v1 pending task )
+ -React UI side development.
+ -Admin functionality for giving the delete access to few users (includes Authentication).
  -Implement unit testing using Mocha.js.
