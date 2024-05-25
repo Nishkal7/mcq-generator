@@ -4,6 +4,7 @@ const multer = require("multer");
 const excelToJson = require("convert-excel-to-json");
 const fs = require("fs-extra");
 const logger = require("./src/util/logger");
+const path = require("path");
 const Mcq = require("./src/model/mcqModel");
 
 const app = express();
@@ -72,10 +73,10 @@ app.post("/uploadFile", upload.single("file"), async (req, res) => {
             .status(409)
             .send("Duplicate title found, please give unique name");
         } else {
-            await Mcq.validate(transformedExcelData);
-            const mcqDoc = await Mcq.create(transformedExcelData);
-            logger.emit("logging", "Record Succesfully Created", "bgBlue");
-            res.send(mcqDoc);
+          await Mcq.validate(transformedExcelData);
+          const mcqDoc = await Mcq.create(transformedExcelData);
+          logger.emit("logging", "Record Succesfully Created", "bgBlue");
+          res.send(mcqDoc);
         }
       } catch (error) {
         res.status(500).send(error);
@@ -86,14 +87,32 @@ app.post("/uploadFile", upload.single("file"), async (req, res) => {
   }
 });
 
-app.get("/getAllDocs", async(req, res) => {
+app.get("/getAllDocs", async (req, res) => {
   try {
     const results = await Mcq.find();
     res.send(results);
   } catch (error) {
     res.status(500).send(error);
   }
-})
+});
+
+app.get("/downloadFile", async (req, res) => {
+  try {
+    const options = {
+      root: path.join(__dirname),
+    };
+    const fileName = "mcq.xlsx";
+    res.download(fileName, options, function (err) {
+      if (err) {
+        console.error("Error sending file:", err);
+      } else {
+        console.log("Sent sample file:", fileName);
+      }
+    });
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
 
 app.listen(process.env.PORT, () => {
   console.log(`Listening on port ${process.env.PORT}`);
