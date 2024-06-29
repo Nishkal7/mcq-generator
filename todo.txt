@@ -2,4 +2,3 @@
  -React UI side development.
  -Update logic at UI side for client.
  -Admin functionality for giving the delete access to few users (includes Authentication).
- -Implement unit testing using Mocha.js.
