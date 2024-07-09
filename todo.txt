@@ -1,4 +1,130 @@
- TODO v2:
- -React UI side development.
- -Update logic at UI side for client.
- -Admin functionality for giving the delete access to few users (includes Authentication).
+UI Sample : 
+
+import React, { useEffect, useState } from 'react';
+
+const App = () => {
+  const [groups, setGroups] = useState([]);
+  const [remainingUsers, setRemainingUsers] = useState([]);
+  const [groupSize, setGroupSize] = useState(3);
+  const [maxDistance, setMaxDistance] = useState(1000);
+
+  useEffect(() => {
+    const fetchGroups = async () => {
+      const response = await fetch(`/api/close-groups?maxDistance=${maxDistance}&groupSize=${groupSize}`);
+      const data = await response.json();
+      setGroups(data.groups);
+      setRemainingUsers(data.remainingUsers);
+    };
+
+    fetchGroups();
+  }, [groupSize, maxDistance]);
+
+  return (
+    <div>
+      <h1>Close User Groups</h1>
+      <label>
+        Group Size:
+        <input
+          type="number"
+          value={groupSize}
+          onChange={(e) => setGroupSize(parseInt(e.target.value))}
+          min="2"
+          max="10"
+        />
+      </label>
+      <label>
+        Max Distance (meters):
+        <input
+          type="number"
+          value={maxDistance}
+          onChange={(e) => setMaxDistance(parseFloat(e.target.value))}
+        />
+      </label>
+      <ul>
+        {groups.map((group, index) => (
+          <li key={index}>
+            {group.map(user => user.name).join(', ')} - Close group
+          </li>
+        ))}
+      </ul>
+      <h2>Remaining Users</h2>
+      <ul>
+        {remainingUsers.map(user => (
+          <li key={user.id}>{user.name}</li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default App;
+
+API sample : 
+
+const express = require('express');
+const kdt = require('kdt');
+const app = express();
+const port = 3001;
+
+// Sample users (replace with database fetching)
+const users = [
+  { id: 1, name: "User1", lat: 37.7749, lon: -122.4194 },
+  { id: 2, name: "User2", lat: 37.7740, lon: -122.4190 },
+  { id: 3, name: "User3", lat: 37.7745, lon: -122.4192 },
+  { id: 4, name: "User4", lat: 37.7750, lon: -122.4195 },
+  { id: 5, name: "User5", lat: 37.7751, lon: -122.4196 },
+  // Add more users as needed
+];
+
+const haversineDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371e3; // Earth radius in meters
+  const φ1 = lat1 * Math.PI / 180;
+  const φ2 = lat2 * Math.PI / 180;
+  const Δφ = (lat2 - lat1) * Math.PI / 180;
+  const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c; // Distance in meters
+};
+
+const findCloseGroups = (users, maxDistance, groupSize) => {
+  const tree = kdt.createKdTree(users, (a, b) => a.id === b.id, ["lat", "lon"]);
+  const groups = [];
+  const used = new Set();
+
+  users.forEach(user => {
+    if (!used.has(user.id)) {
+      const nearbyUsers = tree.nearest(user, groupSize - 1, maxDistance).map(neighbor => neighbor[0]);
+      const potentialGroup = [user, ...nearbyUsers];
+
+      if (potentialGroup.length === groupSize) {
+        const isValidGroup = potentialGroup.every((u1, index) =>
+          potentialGroup.slice(index + 1).every(u2 => haversineDistance(u1.lat, u1.lon, u2.lat, u2.lon) <= maxDistance)
+        );
+
+        if (isValidGroup) {
+          potentialGroup.forEach(u => used.add(u.id));
+          groups.push(potentialGroup);
+        }
+      }
+    }
+  });
+
+  const remainingUsers = users.filter(user => !used.has(user.id));
+  return { groups, remainingUsers };
+};
+
+app.get('/api/close-groups', (req, res) => {
+  const maxDistance = parseFloat(req.query.maxDistance) || 1000; // Example threshold in meters
+  const groupSize = parseInt(req.query.groupSize) || 3; // Default to 3 if not provided
+  const result = findCloseGroups(users, maxDistance, groupSize);
+  res.json(result);
+});
+
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
+});
